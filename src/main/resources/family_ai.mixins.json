@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "package": "com.example.familyai.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "AnimalEntityMixin",
+    "MobEntityAccessor",
+    "MobEntityFamilyTickerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

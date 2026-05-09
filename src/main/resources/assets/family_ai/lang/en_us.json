@@ -1,0 +1,14 @@
+{
+  "family_ai.config.title": "Family AI",
+  "family_ai.config.child_follow_speed": "Baby speed",
+  "family_ai.config.child_stop_distance": "Baby stop distance",
+  "family_ai.config.child_too_far_distance": "Baby far distance",
+  "family_ai.config.parent_protect_speed": "Parent speed",
+  "family_ai.config.mate_cohesion_speed": "Mate speed",
+  "family_ai.config.mate_cohesion_radius": "Mate radius",
+  "family_ai.config.hostile_scan_range": "Hostile range",
+  "family_ai.config.parent_fallback_range": "Parent fallback",
+  "family_ai.config.alert_ticks": "Alert ticks",
+  "family_ai.config.alert_cooldown_ticks": "Alert cooldown",
+  "family_ai.config.warning_sound_cooldown_ticks": "Sound cooldown"
+}

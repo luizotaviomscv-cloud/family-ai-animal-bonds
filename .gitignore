@@ -1,0 +1,9 @@
+.gradle/
+.gradle-local/
+build/
+run/
+*.log
+hs_err_pid*
+replay_pid*
+publish/
+release-package/

@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "family_ai",
+  "version": "${version}",
+  "name": "Family AI: Animal Bonds",
+  "description": "Persistent family behavior for peaceful animals.",
+  "icon": "assets/family_ai/icon.png",
+  "authors": [
+    "Luiz Otávio Marques"
+  ],
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.example.familyai.FamilyAiMod"
+    ],
+    "modmenu": [
+      "com.example.familyai.client.FamilyAiModMenuIntegration"
+    ]
+  },
+  "mixins": [
+    "family_ai.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.18.1",
+    "fabric-api": ">=0.141.3",
+    "minecraft": "1.21.11"
+  },
+  "suggests": {
+    "modmenu": ">=17.0.0"
+  }
+}
