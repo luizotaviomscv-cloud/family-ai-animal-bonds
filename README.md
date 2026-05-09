@@ -1,6 +1,6 @@
-# Family AI Animal Bonds
+# Family Animal Bonds
 
-Family AI gives peaceful vanilla animals persistent family behavior.
+Family Animal Bonds gives peaceful vanilla animals persistent family behavior.
 
 Baby animals remember their parents, parents remember their children, and families react together when danger appears nearby. Instead of running randomly, a threatened baby tries to reach its mother or father, while alerted parents move to protect it.
 
@@ -30,7 +30,7 @@ Baby animals remember their parents, parents remember their children, and famili
 
 ## In-Game Config
 
-With Mod Menu installed, open the mod list, select **Family AI: Animal Bonds**, and use the config button.
+With Mod Menu installed, open the mod list, select **Family Animal Bonds**, and use the config button.
 
 Without Mod Menu, edit:
 
@@ -50,7 +50,7 @@ Looks at the animal in your crosshair and prints family data, sibling count, you
 
 ## Datapack Support
 
-The AI only applies to entity types in:
+The family behavior system only applies to entity types in:
 
 ```text
 family_ai:family_animals

@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for contributing to Family AI Animal Bonds.
+Thanks for contributing to Family Animal Bonds.
 
 ## Requirements
 - Java 21+
@@ -18,10 +18,9 @@ Output JAR:
 ## Coding notes
 - Keep behavior configurable through `FamilyAiConfig`.
 - Preserve NBT compatibility when adding new persistent data.
-- Avoid introducing AI goals that conflict with existing family priorities.
+- Avoid introducing new goals that conflict with existing family priorities.
 
 ## Pull requests
 - Keep PRs focused by feature/fix.
 - Update `CHANGELOG.md` for user-visible behavior changes.
 - Include test notes in the PR description.
-

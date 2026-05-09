@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "id": "family_ai",
   "version": "${version}",
-  "name": "Family AI Animal Bonds",
-  "description": "Persistent family behavior for peaceful animals.",
+  "name": "Family Animal Bonds",
+  "description": "Persistent family behavior for peaceful animals in Minecraft.",
   "icon": "assets/family_ai/icon.png",
   "authors": [
     "Luiz Otavio Marques"
