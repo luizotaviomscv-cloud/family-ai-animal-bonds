@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "id": "family_ai",
   "version": "${version}",
-  "name": "Family AI: Animal Bonds",
+  "name": "Family AI Animal Bonds",
   "description": "Persistent family behavior for peaceful animals.",
   "icon": "assets/family_ai/icon.png",
   "authors": [
-    "Luiz Otávio Marques"
+    "Luiz Otavio Marques"
   ],
   "environment": "*",
   "entrypoints": {

@@ -50,9 +50,15 @@ public final class FamilyAiCommands {
         send(source, "Pai: " + format(data.family$getFatherUuid()));
         send(source, "Parceiro: " + format(data.family$getPartnerUuid()));
         send(source, "Filhos registrados: " + data.family$getChildUuids().size());
+        send(source, "Irmaos registrados: " + data.family$getSiblingUuids().size());
+        int reputation = FamilyAi.getReputationFor(animal, player.getUUID());
+        ReputationState state = FamilyAi.getReputationState(animal, player.getUUID());
+        send(source, "Reputacao com voce: " + reputation + " (" + state + ")");
+        send(source, "Jogadores com reputacao salva: " + data.family$getReputationMap().size());
         send(source, "Alerta: " + data.family$getAlertTicks() + " ticks, cooldown: " + data.family$getAlertCooldownTicks() + " ticks");
         send(source, "Ameaca: " + format(data.family$getThreatUuid()));
         send(source, "Filhote em alerta: " + format(data.family$getAlertChildUuid()));
+        send(source, "Ultima brincadeira: " + data.family$getLastPlayTick());
         send(source, "Versao dos dados: " + data.family$getDataVersion());
         return 1;
     }

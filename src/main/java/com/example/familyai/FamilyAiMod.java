@@ -4,9 +4,11 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
+import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.player.Player;
 
 public final class FamilyAiMod implements ModInitializer {
     public static final String MOD_ID = "family_ai";
@@ -28,9 +30,22 @@ public final class FamilyAiMod implements ModInitializer {
             }
         });
 
+        ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> {
+            if (source.getEntity() instanceof Player player) {
+                FamilyAi.onLivingEntityKilledByPlayer(entity, player);
+            }
+        });
+
         AttackEntityCallback.EVENT.register((player, level, hand, entity, hitResult) -> {
-            if (level instanceof ServerLevel && entity instanceof Animal animal && animal.isBaby()) {
-                FamilyAi.onChildThreatened(animal, player);
+            if (level instanceof ServerLevel && entity instanceof Animal animal) {
+                FamilyAi.onAnimalHurtByPlayer(animal, player);
+            }
+            return InteractionResult.PASS;
+        });
+
+        UseEntityCallback.EVENT.register((player, level, hand, entity, hitResult) -> {
+            if (level instanceof ServerLevel && entity instanceof Animal animal && FamilyAi.isFamilyAnimal(animal) && animal.isFood(player.getItemInHand(hand))) {
+                return FamilyAi.onAnimalFed(animal, player) ? InteractionResult.PASS : InteractionResult.FAIL;
             }
             return InteractionResult.PASS;
         });

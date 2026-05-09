@@ -1,5 +1,6 @@
 package com.example.familyai.mixin;
 
+import com.example.familyai.FamilyAi;
 import com.example.familyai.FamilyAnimal;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.animal.Animal;
@@ -14,6 +15,7 @@ public abstract class MobEntityFamilyTickerMixin {
     private void familyAi$tickAlertState(CallbackInfo ci) {
         if ((Object) this instanceof Animal animal && animal instanceof FamilyAnimal familyAnimal) {
             familyAnimal.family$tickAlert();
+            FamilyAi.tickFamilyAi(animal);
         }
     }
 }

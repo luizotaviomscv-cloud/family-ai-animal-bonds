@@ -6,6 +6,8 @@ import com.example.familyai.FamilyAnimal;
 import com.example.familyai.FamilySex;
 import com.example.familyai.goal.ProtectChildGoal;
 import com.example.familyai.goal.RunToParentGoal;
+import com.example.familyai.goal.PlayWithSiblingGoal;
+import com.example.familyai.goal.KeepDistanceFromPlayerGoal;
 import com.example.familyai.goal.StayNearMateGoal;
 import com.mojang.serialization.Codec;
 import net.minecraft.server.level.ServerLevel;
@@ -22,6 +24,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -33,9 +37,12 @@ public abstract class AnimalEntityMixin implements FamilyAnimal {
     private static final String FATHER_KEY = "Father";
     private static final String PARTNER_KEY = "Partner";
     private static final String CHILDREN_KEY = "Children";
+    private static final String SIBLINGS_KEY = "Siblings";
+    private static final String REPUTATION_KEY = "Reputation";
     private static final String SEX_KEY = "Sex";
+    private static final String LAST_PLAY_TICK_KEY = "LastPlayTick";
     private static final String DATA_VERSION_KEY = "DataVersion";
-    private static final int CURRENT_DATA_VERSION = 1;
+    private static final int CURRENT_DATA_VERSION = 2;
 
     private UUID familyAi$motherUuid;
     private UUID familyAi$fatherUuid;
@@ -43,9 +50,12 @@ public abstract class AnimalEntityMixin implements FamilyAnimal {
     private UUID familyAi$threatUuid;
     private UUID familyAi$alertChildUuid;
     private final Set<UUID> familyAi$childUuids = new HashSet<>();
+    private final Set<UUID> familyAi$siblingUuids = new HashSet<>();
+    private final Map<UUID, Integer> familyAi$reputation = new HashMap<>();
     private FamilySex familyAi$sex = FamilySex.UNKNOWN;
     private int familyAi$alertTicks;
     private int familyAi$alertCooldownTicks;
+    private long familyAi$lastPlayTick;
     private int familyAi$dataVersion = CURRENT_DATA_VERSION;
 
     @Inject(method = "<init>", at = @At("TAIL"))
@@ -59,6 +69,8 @@ public abstract class AnimalEntityMixin implements FamilyAnimal {
         MobEntityAccessor accessor = (MobEntityAccessor) animal;
         accessor.familyAi$getGoalSelector().addGoal(0, new RunToParentGoal(animal, config.childFollowSpeed, config.childStopDistance));
         accessor.familyAi$getGoalSelector().addGoal(1, new ProtectChildGoal(animal, config.parentProtectSpeed));
+        accessor.familyAi$getGoalSelector().addGoal(2, new KeepDistanceFromPlayerGoal(animal));
+        accessor.familyAi$getGoalSelector().addGoal(5, new PlayWithSiblingGoal(animal, config.siblingPlaySpeed));
         accessor.familyAi$getGoalSelector().addGoal(6, new StayNearMateGoal(animal, config.mateCohesionSpeed, config.mateCohesionRadius));
     }
 
@@ -83,6 +95,18 @@ public abstract class AnimalEntityMixin implements FamilyAnimal {
         for (UUID childUuid : familyAi$childUuids) {
             children.add(childUuid.toString());
         }
+
+        ValueOutput.TypedOutputList<String> siblings = family.list(SIBLINGS_KEY, Codec.STRING);
+        for (UUID siblingUuid : familyAi$siblingUuids) {
+            siblings.add(siblingUuid.toString());
+        }
+
+        ValueOutput.TypedOutputList<String> reputation = family.list(REPUTATION_KEY, Codec.STRING);
+        for (Map.Entry<UUID, Integer> entry : familyAi$reputation.entrySet()) {
+            reputation.add(entry.getKey() + "=" + entry.getValue());
+        }
+
+        family.putLong(LAST_PLAY_TICK_KEY, familyAi$lastPlayTick);
     }
 
     @Inject(method = "readAdditionalSaveData", at = @At("TAIL"))
@@ -91,7 +115,10 @@ public abstract class AnimalEntityMixin implements FamilyAnimal {
         familyAi$fatherUuid = null;
         familyAi$partnerUuid = null;
         familyAi$childUuids.clear();
+        familyAi$siblingUuids.clear();
+        familyAi$reputation.clear();
         familyAi$sex = FamilySex.UNKNOWN;
+        familyAi$lastPlayTick = 0L;
         familyAi$dataVersion = 0;
 
         ValueInput family = input.childOrEmpty(ROOT_KEY);
@@ -108,6 +135,31 @@ public abstract class AnimalEntityMixin implements FamilyAnimal {
                 // Ignore corrupted child entries instead of breaking entity loading.
             }
         }
+
+        for (String siblingUuid : family.listOrEmpty(SIBLINGS_KEY, Codec.STRING)) {
+            try {
+                familyAi$siblingUuids.add(UUID.fromString(siblingUuid));
+            } catch (IllegalArgumentException ignored) {
+                // Ignore corrupted sibling entries instead of breaking entity loading.
+            }
+        }
+
+        for (String reputationEntry : family.listOrEmpty(REPUTATION_KEY, Codec.STRING)) {
+            String[] parts = reputationEntry.split("=", 2);
+            if (parts.length != 2) {
+                continue;
+            }
+
+            try {
+                UUID playerUuid = UUID.fromString(parts[0]);
+                int reputation = Integer.parseInt(parts[1]);
+                familyAi$reputation.put(playerUuid, FamilyAi.clampReputation(reputation));
+            } catch (IllegalArgumentException ignored) {
+                // Ignore corrupted reputation entries instead of breaking entity loading.
+            }
+        }
+
+        familyAi$lastPlayTick = family.getLongOr(LAST_PLAY_TICK_KEY, 0L);
     }
 
     @Override
@@ -141,6 +193,16 @@ public abstract class AnimalEntityMixin implements FamilyAnimal {
     }
 
     @Override
+    public Set<UUID> family$getSiblingUuids() {
+        return Collections.unmodifiableSet(familyAi$siblingUuids);
+    }
+
+    @Override
+    public Map<UUID, Integer> family$getReputationMap() {
+        return Collections.unmodifiableMap(familyAi$reputation);
+    }
+
+    @Override
     public FamilySex family$getSex() {
         return familyAi$sex;
     }
@@ -158,6 +220,11 @@ public abstract class AnimalEntityMixin implements FamilyAnimal {
     @Override
     public int family$getDataVersion() {
         return familyAi$dataVersion;
+    }
+
+    @Override
+    public long family$getLastPlayTick() {
+        return familyAi$lastPlayTick;
     }
 
     @Override
@@ -185,6 +252,50 @@ public abstract class AnimalEntityMixin implements FamilyAnimal {
         if (uuid != null) {
             familyAi$childUuids.add(uuid);
         }
+    }
+
+    @Override
+    public void family$addSiblingUuid(UUID uuid) {
+        if (uuid != null) {
+            familyAi$siblingUuids.add(uuid);
+        }
+    }
+
+    @Override
+    public void family$setReputation(UUID playerUuid, int value) {
+        if (playerUuid == null) {
+            return;
+        }
+
+        int clamped = FamilyAi.clampReputation(value);
+        if (clamped == 0) {
+            familyAi$reputation.remove(playerUuid);
+        } else {
+            familyAi$reputation.put(playerUuid, clamped);
+        }
+    }
+
+    @Override
+    public void family$addReputation(UUID playerUuid, int delta) {
+        if (playerUuid == null || delta == 0) {
+            return;
+        }
+
+        int updated = FamilyAi.clampReputation(family$getReputation(playerUuid) + delta);
+        family$setReputation(playerUuid, updated);
+    }
+
+    @Override
+    public int family$getReputation(UUID playerUuid) {
+        if (playerUuid == null) {
+            return 0;
+        }
+        return familyAi$reputation.getOrDefault(playerUuid, 0);
+    }
+
+    @Override
+    public void family$setLastPlayTick(long gameTick) {
+        familyAi$lastPlayTick = Math.max(0L, gameTick);
     }
 
     @Override

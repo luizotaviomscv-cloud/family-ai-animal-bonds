@@ -7,11 +7,15 @@ Baby animals remember their parents, parents remember their children, and famili
 ## Features
 
 - Persistent mother, father, partner, and child UUID data
+- Persistent sibling bond data
+- Persistent per-player reputation data
 - Babies follow their mother first, then their father if needed
 - Threatened babies run toward their family instead of fleeing randomly
 - Parents enter an alert state when a baby is attacked
 - Parents try to stand between the attacker and the baby
 - Bonded adult pairs stay near each other while grazing
+- Babies can play with recognized siblings
+- Feeding raises trust, attacking lowers trust, and nearby herd members learn from it
 - Config file at `config/family-ai.json`
 - Optional Mod Menu config screen
 - `/familyai inspect` debug command
@@ -34,7 +38,7 @@ Without Mod Menu, edit:
 config/family-ai.json
 ```
 
-Configurable values include baby follow speed, parent protection speed, family radius, alert duration, warning sound cooldown, and hostile player scan range.
+Configurable values include follow and protection behavior, alert windows, sibling play tuning, and the full reputation system (gain/loss, hostility threshold, and herd gossip).
 
 ## Debug Command
 
@@ -42,7 +46,7 @@ Configurable values include baby follow speed, parent protection speed, family r
 /familyai inspect
 ```
 
-Looks at the animal in your crosshair and prints family data such as parent UUIDs, registered children, alert state, threat UUID, and data version.
+Looks at the animal in your crosshair and prints family data, sibling count, your current reputation with that animal, and NBT data version.
 
 ## Datapack Support
 
@@ -56,23 +60,16 @@ Datapacks and other mods can extend this tag to add compatible animals.
 
 ## Current Status
 
-This is a beta release. The core family bond system works, but AI balance and species-specific behavior may change in future versions.
+This is build `1.1.0`. The family core is stable, with sibling play and player reputation now included.
 
 Back up important worlds before testing early releases.
 
 ## Roadmap
 
-- Sibling recognition
-- Baby animals playing with siblings
 - Species-specific shelter behavior, such as chicks hiding under mother chickens
 - Orphan adoption
-- Player trust and distrust
 - More herd and flock behaviors
 
 ## License
 
-All Rights Reserved.
-
-Official releases may be used for personal gameplay. Redistribution, re-uploading,
-fork publishing, and derivative public releases require explicit permission from
-the author.
+MIT.
