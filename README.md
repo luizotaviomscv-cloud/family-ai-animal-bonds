@@ -78,4 +78,5 @@ Back up important worlds before testing early releases.
 
 ## License
 
-MIT.
+All Rights Reserved  
+Copyright (c) 2026 Luiz Otávio Marques

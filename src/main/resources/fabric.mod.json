@@ -8,6 +8,7 @@
   "authors": [
     "Luiz Otavio Marques"
   ],
+  "license": "All Rights Reserved",
   "environment": "*",
   "entrypoints": {
     "main": [
