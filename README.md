@@ -31,6 +31,7 @@ Baby animals remember their parents, parents remember their children, and famili
 ## In-Game Config
 
 With Mod Menu installed, open the mod list, select **Family AI Animal Bonds**, and use the config button.
+The config is grouped by categories (family core, protection, reputation, spawns, sibling play) for faster navigation.
 
 Without Mod Menu, edit:
 

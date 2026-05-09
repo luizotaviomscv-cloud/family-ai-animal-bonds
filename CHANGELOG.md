@@ -27,6 +27,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - `/familyai inspect` now shows player reputation score and state.
 - Mod Menu config now exposes reputation, gossip, spawn, and sibling controls.
+- Mod Menu config UI reorganized into clean categories to reduce screen clutter.
 - Data version incremented for new NBT fields.
 
 ## [1.0.0] - 2026-05-08
@@ -41,4 +42,3 @@ All notable changes to this project will be documented in this file.
 - Config file support (`config/family-ai.json`).
 - Mod Menu config integration.
 - `/familyai inspect` command.
-
