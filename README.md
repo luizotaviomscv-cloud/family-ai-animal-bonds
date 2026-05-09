@@ -1,4 +1,4 @@
-# Family AI: Animal Bonds
+# Family AI Animal Bonds
 
 Family AI gives peaceful vanilla animals persistent family behavior.
 
@@ -57,6 +57,12 @@ family_ai:family_animals
 ```
 
 Datapacks and other mods can extend this tag to add compatible animals.
+
+## Project Links
+
+- Changelog: `CHANGELOG.md`
+- Contributing: `CONTRIBUTING.md`
+- Issues: use GitHub issue templates (bug report / feature request)
 
 ## Current Status
 

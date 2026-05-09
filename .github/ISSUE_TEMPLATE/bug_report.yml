@@ -1,0 +1,53 @@
+name: Bug report
+description: Report a bug in Family AI Animal Bonds
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: What happened?
+      description: Clear description of the bug.
+      placeholder: Describe what happened.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Start world...
+        2. Spawn animals...
+        3. ...
+    validations:
+      required: true
+  - type: input
+    id: mc-version
+    attributes:
+      label: Minecraft version
+      placeholder: "1.21.11"
+    validations:
+      required: true
+  - type: input
+    id: loader-version
+    attributes:
+      label: Fabric Loader version
+      placeholder: "0.19.2"
+    validations:
+      required: true
+  - type: input
+    id: mod-version
+    attributes:
+      label: Mod version
+      placeholder: "1.1.0"
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or crash report
+      description: Paste stacktrace/log snippet if available.
+      render: shell
+    validations:
+      required: false
