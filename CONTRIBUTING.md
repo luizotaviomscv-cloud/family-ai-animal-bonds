@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for contributing to Family Animal Bonds.
+Thanks for contributing to Family AI Animal Bonds.
 
 ## Requirements
 - Java 21+
