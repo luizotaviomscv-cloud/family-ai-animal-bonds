@@ -34,6 +34,7 @@ public final class FamilyAi {
     private static final Map<UUID, Long> FEED_COOLDOWNS = new HashMap<>();
     private static final Map<UUID, Long> SPRINT_PENALTY_COOLDOWNS = new HashMap<>();
     private static final Map<Long, Long> CHUNK_FAMILY_SPAWN_COOLDOWNS = new HashMap<>();
+    private static final Set<UUID> NATURAL_FAMILY_SPAWN_SUPPRESSION = new HashSet<>();
 
     private FamilyAi() {
     }
@@ -525,6 +526,11 @@ public final class FamilyAi {
             return;
         }
 
+        // Prevent mod-spawned family members from recursively creating new family groups.
+        if (NATURAL_FAMILY_SPAWN_SUPPRESSION.remove(seed.getUUID())) {
+            return;
+        }
+
         FamilyAiConfig config = FamilyAiConfig.get();
         if (!config.enableNaturalFamilySpawns || config.naturalFamilySpawnChance <= 0.0D) {
             return;
@@ -561,8 +567,9 @@ public final class FamilyAi {
             return;
         }
 
-        spawnNaturalFamilyGroup(level, seed);
+        // Set cooldown before spawning to avoid re-entrant cascades in the same chunk.
         CHUNK_FAMILY_SPAWN_COOLDOWNS.put(chunkKey, now);
+        spawnNaturalFamilyGroup(level, seed);
     }
 
     private static void spawnNaturalFamilyGroup(ServerLevel level, Animal seed) {
@@ -643,8 +650,13 @@ public final class FamilyAi {
             spawned.setAge(DEFAULT_BABY_AGE_TICKS);
         }
 
-        level.addFreshEntity(spawned);
-        onAnimalLoaded(spawned);
+        // We assign sex here because we no longer call onAnimalLoaded directly.
+        ((FamilyAnimal) spawned).family$setSex(FamilySex.random(spawned.getRandom()));
+        NATURAL_FAMILY_SPAWN_SUPPRESSION.add(spawned.getUUID());
+        if (!level.addFreshEntity(spawned)) {
+            NATURAL_FAMILY_SPAWN_SUPPRESSION.remove(spawned.getUUID());
+            return null;
+        }
         return spawned;
     }
 
