@@ -15,14 +15,54 @@ public final class FamilyAiConfig {
     private static final Path PATH = FabricLoader.getInstance().getConfigDir().resolve("family-ai.json");
     private static FamilyAiConfig instance = new FamilyAiConfig();
 
+    public boolean enableAdvancedAi = true;
+    public boolean enableFamilySystem = true;
+    public boolean enableHerdSystem = true;
+    public boolean enableChildProtection = true;
+    public boolean enablePersonality = true;
+    public boolean enableMemory = true;
+    public boolean enableAdvancedDangerReaction = true;
+    public boolean enableHerdLeader = true;
+    public boolean enableUnstuckSystem = true;
+    public boolean enableHud = false;
+    public String hudMode = FamilyAiHudMode.OFF.name();
+    public boolean enableChatMessages = true;
+    public boolean enableWelcomeMessage = true;
+    public boolean enableGuideBook = true;
+    public boolean allowGuideCommand = true;
+    public boolean enableDebug = false;
+    public int debugDetailLevel = 1;
+
+    public int aiUpdateIntervalTicks = 10;
+    public int chatMessageCooldownTicks = 20 * 6;
+    public int threatMemoryTicks = 20 * 20;
+    public int panicCooldownTicks = 20 * 8;
+    public int pathRecalcCooldownTicks = 10;
+    public int stuckCheckIntervalTicks = 20;
+    public int stuckRecoveryTicks = 20 * 3;
+    public int maxPathFailCount = 4;
+    public int herdLeaderSwapCooldownTicks = 20 * 15;
+
     public double childFollowSpeed = 1.35D;
     public double childStopDistance = 2.0D;
     public double childTooFarDistance = 3.0D;
+    public double childRunSpeed = 1.55D;
+    public double tempGuardianFollowDistance = 3.2D;
     public double parentProtectSpeed = 1.15D;
     public double mateCohesionSpeed = 0.9D;
     public double mateCohesionRadius = 8.0D;
+    public double herdMoveSpeed = 0.95D;
+    public double regroupSpeed = 1.08D;
+    public double fleeSpeed = 1.3D;
+    public double herdMaxDistance = 12.0D;
+    public double herdSeparationDistance = 1.6D;
+    public double herdAlignmentFactor = 0.65D;
+    public double herdCohesionFactor = 0.95D;
+    public double regroupDistance = 16.0D;
     public double hostileScanRange = 9.0D;
+    public double dangerDetectionRadius = 12.0D;
     public double parentFallbackRange = 24.0D;
+    public double panicIntensity = 1.0D;
     public int alertTicks = 20 * 12;
     public int alertCooldownTicks = 20 * 3;
     public int warningSoundCooldownTicks = 40;
@@ -49,10 +89,11 @@ public final class FamilyAiConfig {
     public double defendRewardRange = 14.0D;
 
     public boolean enableNaturalFamilySpawns = true;
-    public double naturalFamilySpawnChance = 0.22D;
+    public double naturalFamilySpawnChance = 0.08D;
     public double naturalFamilySpawnRadius = 9.0D;
-    public int naturalFamilyLocalCap = 20;
-    public int naturalFamilyChunkCooldownTicks = 20 * 70;
+    public int naturalFamilyLocalCap = 12;
+    public int naturalFamilyChunkCooldownTicks = 20 * 120;
+    public double naturalFamilyAnchorRange = 12.0D;
     public int herdAdultsMin = 3;
     public int herdAdultsMax = 6;
     public int herdBabiesMin = 0;
@@ -86,7 +127,6 @@ public final class FamilyAiConfig {
                 instance = new FamilyAiConfig();
             }
         }
-
         save();
     }
 
@@ -98,22 +138,54 @@ public final class FamilyAiConfig {
                 GSON.toJson(instance, writer);
             }
         } catch (IOException ignored) {
-            // Keep defaults in memory if the config file cannot be written.
+            // Keep current in-memory values when file write fails.
         }
     }
 
+    public FamilyAiHudMode resolvedHudMode() {
+        return FamilyAiHudMode.fromName(hudMode);
+    }
+
+    public void setHudMode(FamilyAiHudMode mode) {
+        hudMode = (mode == null ? FamilyAiHudMode.OFF : mode).name();
+    }
+
     private FamilyAiConfig sanitized() {
+        debugDetailLevel = clamp(debugDetailLevel, 0, 3);
+        aiUpdateIntervalTicks = clamp(aiUpdateIntervalTicks, 2, 80);
+        chatMessageCooldownTicks = clamp(chatMessageCooldownTicks, 10, 20 * 60);
+        threatMemoryTicks = clamp(threatMemoryTicks, 20, 20 * 60 * 10);
+        panicCooldownTicks = clamp(panicCooldownTicks, 20, 20 * 120);
+        pathRecalcCooldownTicks = clamp(pathRecalcCooldownTicks, 2, 80);
+        stuckCheckIntervalTicks = clamp(stuckCheckIntervalTicks, 5, 80);
+        stuckRecoveryTicks = clamp(stuckRecoveryTicks, 20, 20 * 60);
+        maxPathFailCount = clamp(maxPathFailCount, 1, 20);
+        herdLeaderSwapCooldownTicks = clamp(herdLeaderSwapCooldownTicks, 20, 20 * 120);
+
         childFollowSpeed = clamp(childFollowSpeed, 0.05D, 3.0D);
         childStopDistance = clamp(childStopDistance, 0.5D, 8.0D);
-        childTooFarDistance = clamp(childTooFarDistance, childStopDistance, 16.0D);
+        childTooFarDistance = clamp(childTooFarDistance, childStopDistance, 24.0D);
+        childRunSpeed = clamp(childRunSpeed, 0.05D, 3.0D);
+        tempGuardianFollowDistance = clamp(tempGuardianFollowDistance, 1.0D, 12.0D);
         parentProtectSpeed = clamp(parentProtectSpeed, 0.05D, 3.0D);
         mateCohesionSpeed = clamp(mateCohesionSpeed, 0.05D, 3.0D);
         mateCohesionRadius = clamp(mateCohesionRadius, 2.0D, 32.0D);
+        herdMoveSpeed = clamp(herdMoveSpeed, 0.05D, 3.0D);
+        regroupSpeed = clamp(regroupSpeed, 0.05D, 3.0D);
+        fleeSpeed = clamp(fleeSpeed, 0.05D, 3.0D);
+        herdMaxDistance = clamp(herdMaxDistance, 4.0D, 48.0D);
+        herdSeparationDistance = clamp(herdSeparationDistance, 0.8D, 5.0D);
+        herdAlignmentFactor = clamp(herdAlignmentFactor, 0.0D, 2.0D);
+        herdCohesionFactor = clamp(herdCohesionFactor, 0.0D, 2.0D);
+        regroupDistance = clamp(regroupDistance, herdMaxDistance, 64.0D);
         hostileScanRange = clamp(hostileScanRange, 1.0D, 32.0D);
+        dangerDetectionRadius = clamp(dangerDetectionRadius, 2.0D, 40.0D);
         parentFallbackRange = clamp(parentFallbackRange, 4.0D, 64.0D);
+        panicIntensity = clamp(panicIntensity, 0.2D, 2.5D);
         alertTicks = clamp(alertTicks, 20, 20 * 60);
         alertCooldownTicks = clamp(alertCooldownTicks, 0, 20 * 30);
         warningSoundCooldownTicks = clamp(warningSoundCooldownTicks, 5, 20 * 10);
+        setHudMode(FamilyAiHudMode.fromName(hudMode));
 
         reputationMin = clamp(reputationMin, -500, 0);
         reputationMax = clamp(reputationMax, 0, 500);
@@ -121,7 +193,6 @@ public final class FamilyAiConfig {
             reputationMin = -100;
             reputationMax = 100;
         }
-
         reputationTrustedThreshold = clamp(reputationTrustedThreshold, reputationMin, reputationMax);
         reputationHostileMax = clamp(reputationHostileMax, reputationMin, reputationTrustedThreshold - 2);
         reputationWaryMin = clamp(reputationWaryMin, reputationHostileMax + 1, reputationTrustedThreshold - 1);
@@ -139,13 +210,14 @@ public final class FamilyAiConfig {
         reputationDecayIntervalTicks = clamp(reputationDecayIntervalTicks, 20 * 10, 20 * 60 * 30);
         reputationDecayStep = clamp(reputationDecayStep, 1, 25);
         herdGossipFactor = clamp(herdGossipFactor, 0.0D, 1.0D);
-        herdGossipRange = clamp(herdGossipRange, 12.0D, 20.0D);
+        herdGossipRange = clamp(herdGossipRange, 8.0D, 24.0D);
         defendRewardRange = clamp(defendRewardRange, 6.0D, 24.0D);
 
         naturalFamilySpawnChance = clamp(naturalFamilySpawnChance, 0.0D, 1.0D);
         naturalFamilySpawnRadius = clamp(naturalFamilySpawnRadius, 3.0D, 20.0D);
-        naturalFamilyLocalCap = clamp(naturalFamilyLocalCap, 4, 80);
+        naturalFamilyLocalCap = clamp(naturalFamilyLocalCap, 2, 80);
         naturalFamilyChunkCooldownTicks = clamp(naturalFamilyChunkCooldownTicks, 20, 20 * 60 * 20);
+        naturalFamilyAnchorRange = clamp(naturalFamilyAnchorRange, 4.0D, 32.0D);
         herdAdultsMin = clamp(herdAdultsMin, 1, 32);
         herdAdultsMax = clamp(herdAdultsMax, herdAdultsMin, 32);
         herdBabiesMin = clamp(herdBabiesMin, 0, 16);

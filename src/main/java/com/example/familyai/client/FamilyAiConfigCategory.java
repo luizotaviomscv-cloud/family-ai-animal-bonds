@@ -1,12 +1,15 @@
 package com.example.familyai.client;
 
 public enum FamilyAiConfigCategory {
-    FAMILY_CORE("family_ai.config.category.family_core"),
-    PROTECTION("family_ai.config.category.protection"),
-    REPUTATION_ACTIONS("family_ai.config.category.reputation_actions"),
-    REPUTATION_LIMITS("family_ai.config.category.reputation_limits"),
-    NATURAL_SPAWNS("family_ai.config.category.natural_spawns"),
-    SIBLING_PLAY("family_ai.config.category.sibling_play");
+    ANIMAL_AI("family_ai.config.category.animal_ai"),
+    FAMILY_SYSTEM("family_ai.config.category.family_system"),
+    HERD_SYSTEM("family_ai.config.category.herd_system"),
+    DANGER("family_ai.config.category.danger"),
+    PERSONALITY_MEMORY("family_ai.config.category.personality_memory"),
+    PATHFINDING("family_ai.config.category.pathfinding"),
+    HUD_ALERTS("family_ai.config.category.hud_alerts"),
+    DEBUG_LOGS("family_ai.config.category.debug_logs"),
+    PERFORMANCE("family_ai.config.category.performance");
 
     private final String translationKey;
 

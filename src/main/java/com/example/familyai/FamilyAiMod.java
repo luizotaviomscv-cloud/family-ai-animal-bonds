@@ -3,6 +3,7 @@ package com.example.familyai;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.minecraft.server.level.ServerLevel;
@@ -25,8 +26,8 @@ public final class FamilyAiMod implements ModInitializer {
         });
 
         ServerLivingEntityEvents.AFTER_DAMAGE.register((entity, source, baseDamageTaken, damageTaken, blocked) -> {
-            if (entity instanceof Animal animal && animal.isBaby()) {
-                FamilyAi.onChildThreatened(animal, source.getEntity());
+            if (entity instanceof Animal animal && FamilyAi.isFamilyAnimal(animal)) {
+                FamilyAi.onFamilyAnimalDamaged(animal, source.getEntity());
             }
         });
 
@@ -49,5 +50,13 @@ public final class FamilyAiMod implements ModInitializer {
             }
             return InteractionResult.PASS;
         });
+
+        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+            FamilyAiChat.sendWelcome(handler.player);
+            FamilyAiGuideBook.giveGuideOnFirstJoin(handler.player);
+        });
+
+        ServerPlayConnectionEvents.DISCONNECT.register((handler, server) ->
+                FamilyAiChat.clearPlayer(handler.player.getUUID()));
     }
 }

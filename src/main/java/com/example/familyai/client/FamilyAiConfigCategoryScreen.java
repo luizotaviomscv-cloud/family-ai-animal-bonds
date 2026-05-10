@@ -1,6 +1,7 @@
 package com.example.familyai.client;
 
 import com.example.familyai.FamilyAiConfig;
+import com.example.familyai.FamilyAiHudMode;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.OptionInstance;
 import net.minecraft.client.gui.screens.Screen;
@@ -8,6 +9,7 @@ import net.minecraft.client.gui.screens.options.OptionsSubScreen;
 import net.minecraft.network.chat.Component;
 
 import java.util.Locale;
+import java.util.function.Consumer;
 import java.util.function.DoubleConsumer;
 import java.util.function.IntConsumer;
 import java.util.function.Supplier;
@@ -24,12 +26,15 @@ public final class FamilyAiConfigCategoryScreen extends OptionsSubScreen {
     protected void addOptions() {
         FamilyAiConfig config = FamilyAiConfig.get();
         switch (category) {
-            case FAMILY_CORE -> addFamilyCoreOptions(config);
-            case PROTECTION -> addProtectionOptions(config);
-            case REPUTATION_ACTIONS -> addReputationActionOptions(config);
-            case REPUTATION_LIMITS -> addReputationLimitOptions(config);
-            case NATURAL_SPAWNS -> addNaturalSpawnOptions(config);
-            case SIBLING_PLAY -> addSiblingPlayOptions(config);
+            case ANIMAL_AI -> addAnimalAiOptions(config);
+            case FAMILY_SYSTEM -> addFamilyOptions(config);
+            case HERD_SYSTEM -> addHerdOptions(config);
+            case DANGER -> addDangerOptions(config);
+            case PERSONALITY_MEMORY -> addPersonalityOptions(config);
+            case PATHFINDING -> addPathOptions(config);
+            case HUD_ALERTS -> addHudOptions(config);
+            case DEBUG_LOGS -> addDebugOptions(config);
+            case PERFORMANCE -> addPerformanceOptions(config);
         }
     }
 
@@ -39,115 +44,153 @@ public final class FamilyAiConfigCategoryScreen extends OptionsSubScreen {
         super.removed();
     }
 
-    private void addFamilyCoreOptions(FamilyAiConfig config) {
+    private void addAnimalAiOptions(FamilyAiConfig config) {
         this.list.addSmall(
-                doubleOption("family_ai.config.child_follow_speed", config.childFollowSpeed, 0.25D, 3.0D, value -> config.childFollowSpeed = value),
-                doubleOption("family_ai.config.child_stop_distance", config.childStopDistance, 0.5D, 8.0D, value -> config.childStopDistance = value)
+                boolOption("family_ai.config.enable_advanced_ai", () -> config.enableAdvancedAi, value -> config.enableAdvancedAi = value),
+                intOption("family_ai.config.ai_update_interval_ticks", () -> config.aiUpdateIntervalTicks, 2, 80, value -> config.aiUpdateIntervalTicks = value)
         );
         this.list.addSmall(
-                doubleOption("family_ai.config.child_too_far_distance", config.childTooFarDistance, 1.0D, 16.0D, value -> config.childTooFarDistance = value),
+                doubleOption("family_ai.config.child_follow_speed", config.childFollowSpeed, 0.25D, 3.0D, value -> config.childFollowSpeed = value),
+                doubleOption("family_ai.config.child_run_speed", config.childRunSpeed, 0.25D, 3.0D, value -> config.childRunSpeed = value)
+        );
+        this.list.addSmall(
+                doubleOption("family_ai.config.child_stop_distance", config.childStopDistance, 0.5D, 8.0D, value -> config.childStopDistance = value),
+                doubleOption("family_ai.config.child_too_far_distance", config.childTooFarDistance, 1.0D, 24.0D, value -> config.childTooFarDistance = value)
+        );
+    }
+
+    private void addFamilyOptions(FamilyAiConfig config) {
+        this.list.addSmall(
+                boolOption("family_ai.config.enable_family_system", () -> config.enableFamilySystem, value -> config.enableFamilySystem = value),
+                boolOption("family_ai.config.enable_child_protection", () -> config.enableChildProtection, value -> config.enableChildProtection = value)
+        );
+        this.list.addSmall(
+                boolOption("family_ai.config.enable_sibling_play", () -> config.enableSiblingPlay, value -> config.enableSiblingPlay = value),
                 doubleOption("family_ai.config.parent_fallback_range", config.parentFallbackRange, 4.0D, 64.0D, value -> config.parentFallbackRange = value)
         );
         this.list.addSmall(
-                doubleOption("family_ai.config.mate_cohesion_speed", config.mateCohesionSpeed, 0.25D, 3.0D, value -> config.mateCohesionSpeed = value),
+                doubleOption("family_ai.config.parent_protect_speed", config.parentProtectSpeed, 0.25D, 3.0D, value -> config.parentProtectSpeed = value),
                 doubleOption("family_ai.config.mate_cohesion_radius", config.mateCohesionRadius, 2.0D, 32.0D, value -> config.mateCohesionRadius = value)
         );
     }
 
-    private void addProtectionOptions(FamilyAiConfig config) {
+    private void addHerdOptions(FamilyAiConfig config) {
         this.list.addSmall(
-                doubleOption("family_ai.config.parent_protect_speed", config.parentProtectSpeed, 0.25D, 3.0D, value -> config.parentProtectSpeed = value),
-                doubleOption("family_ai.config.hostile_scan_range", config.hostileScanRange, 1.0D, 32.0D, value -> config.hostileScanRange = value)
+                boolOption("family_ai.config.enable_herd_system", () -> config.enableHerdSystem, value -> config.enableHerdSystem = value),
+                boolOption("family_ai.config.enable_herd_leader", () -> config.enableHerdLeader, value -> config.enableHerdLeader = value)
+        );
+        this.list.addSmall(
+                doubleOption("family_ai.config.herd_max_distance", config.herdMaxDistance, 4.0D, 48.0D, value -> config.herdMaxDistance = value),
+                doubleOption("family_ai.config.herd_separation_distance", config.herdSeparationDistance, 0.8D, 5.0D, value -> config.herdSeparationDistance = value)
+        );
+        this.list.addSmall(
+                doubleOption("family_ai.config.herd_alignment_factor", config.herdAlignmentFactor, 0.0D, 2.0D, value -> config.herdAlignmentFactor = value),
+                doubleOption("family_ai.config.herd_cohesion_factor", config.herdCohesionFactor, 0.0D, 2.0D, value -> config.herdCohesionFactor = value)
+        );
+        this.list.addSmall(
+                boolOption("family_ai.config.enable_natural_family_spawns", () -> config.enableNaturalFamilySpawns, value -> config.enableNaturalFamilySpawns = value),
+                doubleOption("family_ai.config.natural_family_spawn_chance", config.naturalFamilySpawnChance, 0.0D, 1.0D, value -> config.naturalFamilySpawnChance = value)
+        );
+        this.list.addSmall(
+                intOption("family_ai.config.natural_family_local_cap", () -> config.naturalFamilyLocalCap, 2, 80, value -> config.naturalFamilyLocalCap = value),
+                intOption("family_ai.config.natural_family_chunk_cooldown_ticks", () -> config.naturalFamilyChunkCooldownTicks, 20, 20 * 60 * 20, value -> config.naturalFamilyChunkCooldownTicks = value)
+        );
+    }
+
+    private void addDangerOptions(FamilyAiConfig config) {
+        this.list.addSmall(
+                boolOption("family_ai.config.enable_advanced_danger_reaction", () -> config.enableAdvancedDangerReaction, value -> config.enableAdvancedDangerReaction = value),
+                doubleOption("family_ai.config.danger_detection_radius", config.dangerDetectionRadius, 2.0D, 40.0D, value -> config.dangerDetectionRadius = value)
         );
         this.list.addSmall(
                 intOption("family_ai.config.alert_ticks", () -> config.alertTicks, 20, 20 * 60, value -> config.alertTicks = value),
                 intOption("family_ai.config.alert_cooldown_ticks", () -> config.alertCooldownTicks, 0, 20 * 30, value -> config.alertCooldownTicks = value)
         );
         this.list.addSmall(
-                intOption("family_ai.config.warning_sound_cooldown_ticks", () -> config.warningSoundCooldownTicks, 5, 20 * 10, value -> config.warningSoundCooldownTicks = value)
+                doubleOption("family_ai.config.panic_intensity", config.panicIntensity, 0.2D, 2.5D, value -> config.panicIntensity = value),
+                intOption("family_ai.config.panic_cooldown_ticks", () -> config.panicCooldownTicks, 20, 20 * 120, value -> config.panicCooldownTicks = value)
         );
     }
 
-    private void addReputationActionOptions(FamilyAiConfig config) {
+    private void addPersonalityOptions(FamilyAiConfig config) {
         this.list.addSmall(
-                intOption("family_ai.config.reputation_gain_feed", () -> config.reputationGainFeed, 0, 100, value -> config.reputationGainFeed = value),
-                intOption("family_ai.config.reputation_gain_breeding_assist", () -> config.reputationGainBreedingAssist, 0, 100, value -> config.reputationGainBreedingAssist = value)
+                boolOption("family_ai.config.enable_personality", () -> config.enablePersonality, value -> config.enablePersonality = value),
+                boolOption("family_ai.config.enable_memory", () -> config.enableMemory, value -> config.enableMemory = value)
         );
         this.list.addSmall(
-                intOption("family_ai.config.reputation_gain_defend_herd", () -> config.reputationGainDefendHerd, 0, 100, value -> config.reputationGainDefendHerd = value),
-                intOption("family_ai.config.reputation_loss_adult_hit", () -> config.reputationLossAdultHit, 0, 200, value -> config.reputationLossAdultHit = value)
+                intOption("family_ai.config.threat_memory_ticks", () -> config.threatMemoryTicks, 20, 20 * 60 * 10, value -> config.threatMemoryTicks = value),
+                doubleOption("family_ai.config.temp_guardian_follow_distance", config.tempGuardianFollowDistance, 1.0D, 12.0D, value -> config.tempGuardianFollowDistance = value)
         );
-        this.list.addSmall(
-                intOption("family_ai.config.reputation_loss_baby_hit", () -> config.reputationLossBabyHit, 0, 200, value -> config.reputationLossBabyHit = value),
-                intOption("family_ai.config.reputation_loss_kill", () -> config.reputationLossKill, 0, 300, value -> config.reputationLossKill = value)
-        );
-        this.list.addSmall(
-                intOption("family_ai.config.reputation_loss_weapon_sprint", () -> config.reputationLossWeaponSprintNearBaby, 0, 100, value -> config.reputationLossWeaponSprintNearBaby = value),
-                intOption("family_ai.config.feed_reputation_cooldown_ticks", () -> config.feedReputationCooldownTicks, 20, 20 * 60, value -> config.feedReputationCooldownTicks = value)
-        );
-        this.list.addSmall(
-                intOption("family_ai.config.weapon_sprint_penalty_cooldown_ticks", () -> config.weaponSprintPenaltyCooldownTicks, 20, 20 * 30, value -> config.weaponSprintPenaltyCooldownTicks = value),
-                doubleOption("family_ai.config.defend_reward_range", config.defendRewardRange, 6.0D, 24.0D, value -> config.defendRewardRange = value)
-        );
-        this.list.addSmall(
-                doubleOption("family_ai.config.herd_gossip_factor", config.herdGossipFactor, 0.0D, 1.0D, value -> config.herdGossipFactor = value),
-                doubleOption("family_ai.config.herd_gossip_range", config.herdGossipRange, 12.0D, 20.0D, value -> config.herdGossipRange = value)
-        );
-    }
-
-    private void addReputationLimitOptions(FamilyAiConfig config) {
         this.list.addSmall(
                 intOption("family_ai.config.reputation_decay_interval_ticks", () -> config.reputationDecayIntervalTicks, 20 * 10, 20 * 60 * 30, value -> config.reputationDecayIntervalTicks = value),
                 intOption("family_ai.config.reputation_decay_step", () -> config.reputationDecayStep, 1, 25, value -> config.reputationDecayStep = value)
         );
+    }
+
+    private void addPathOptions(FamilyAiConfig config) {
         this.list.addSmall(
-                intOption("family_ai.config.reputation_min", () -> config.reputationMin, -500, 0, value -> config.reputationMin = value),
-                intOption("family_ai.config.reputation_max", () -> config.reputationMax, 0, 500, value -> config.reputationMax = value)
+                boolOption("family_ai.config.enable_unstuck_system", () -> config.enableUnstuckSystem, value -> config.enableUnstuckSystem = value),
+                intOption("family_ai.config.stuck_check_interval_ticks", () -> config.stuckCheckIntervalTicks, 5, 80, value -> config.stuckCheckIntervalTicks = value)
         );
         this.list.addSmall(
-                intOption("family_ai.config.reputation_trusted_threshold", () -> config.reputationTrustedThreshold, -100, 100, value -> config.reputationTrustedThreshold = value),
-                intOption("family_ai.config.reputation_wary_min", () -> config.reputationWaryMin, -100, 100, value -> config.reputationWaryMin = value)
+                intOption("family_ai.config.stuck_recovery_ticks", () -> config.stuckRecoveryTicks, 20, 20 * 60, value -> config.stuckRecoveryTicks = value),
+                intOption("family_ai.config.path_recalc_cooldown_ticks", () -> config.pathRecalcCooldownTicks, 2, 80, value -> config.pathRecalcCooldownTicks = value)
         );
         this.list.addSmall(
-                intOption("family_ai.config.reputation_hostile_max", () -> config.reputationHostileMax, -100, 100, value -> config.reputationHostileMax = value)
+                intOption("family_ai.config.max_path_fail_count", () -> config.maxPathFailCount, 1, 20, value -> config.maxPathFailCount = value),
+                doubleOption("family_ai.config.regroup_distance", config.regroupDistance, config.herdMaxDistance, 64.0D, value -> config.regroupDistance = value)
         );
     }
 
-    private void addNaturalSpawnOptions(FamilyAiConfig config) {
+    private void addHudOptions(FamilyAiConfig config) {
         this.list.addSmall(
-                doubleOption("family_ai.config.natural_family_spawn_chance", config.naturalFamilySpawnChance, 0.0D, 1.0D, value -> config.naturalFamilySpawnChance = value),
-                doubleOption("family_ai.config.natural_family_spawn_radius", config.naturalFamilySpawnRadius, 3.0D, 20.0D, value -> config.naturalFamilySpawnRadius = value)
+                boolOption("family_ai.config.enable_hud", () -> config.enableHud, value -> config.enableHud = value),
+                hudModeOption(config)
         );
         this.list.addSmall(
-                intOption("family_ai.config.natural_family_local_cap", () -> config.naturalFamilyLocalCap, 4, 80, value -> config.naturalFamilyLocalCap = value),
-                intOption("family_ai.config.natural_family_chunk_cooldown_ticks", () -> config.naturalFamilyChunkCooldownTicks, 20, 20 * 60 * 20, value -> config.naturalFamilyChunkCooldownTicks = value)
+                boolOption("family_ai.config.enable_chat_messages", () -> config.enableChatMessages, value -> config.enableChatMessages = value),
+                intOption("family_ai.config.chat_message_cooldown_ticks", () -> config.chatMessageCooldownTicks, 10, 20 * 60, value -> config.chatMessageCooldownTicks = value)
         );
         this.list.addSmall(
-                intOption("family_ai.config.herd_adults_min", () -> config.herdAdultsMin, 1, 32, value -> config.herdAdultsMin = value),
-                intOption("family_ai.config.herd_adults_max", () -> config.herdAdultsMax, 1, 32, value -> config.herdAdultsMax = value)
-        );
-        this.list.addSmall(
-                intOption("family_ai.config.herd_babies_min", () -> config.herdBabiesMin, 0, 16, value -> config.herdBabiesMin = value),
-                intOption("family_ai.config.herd_babies_max", () -> config.herdBabiesMax, 0, 16, value -> config.herdBabiesMax = value)
-        );
-        this.list.addSmall(
-                intOption("family_ai.config.chicken_adults_min", () -> config.chickenAdultsMin, 1, 32, value -> config.chickenAdultsMin = value),
-                intOption("family_ai.config.chicken_adults_max", () -> config.chickenAdultsMax, 1, 32, value -> config.chickenAdultsMax = value)
-        );
-        this.list.addSmall(
-                intOption("family_ai.config.chicken_babies_min", () -> config.chickenBabiesMin, 0, 16, value -> config.chickenBabiesMin = value),
-                intOption("family_ai.config.chicken_babies_max", () -> config.chickenBabiesMax, 0, 16, value -> config.chickenBabiesMax = value)
+                boolOption("family_ai.config.enable_welcome_message", () -> config.enableWelcomeMessage, value -> config.enableWelcomeMessage = value),
+                boolOption("family_ai.config.enable_guide_book", () -> config.enableGuideBook, value -> config.enableGuideBook = value)
         );
     }
 
-    private void addSiblingPlayOptions(FamilyAiConfig config) {
+    private void addDebugOptions(FamilyAiConfig config) {
         this.list.addSmall(
-                doubleOption("family_ai.config.sibling_play_speed", config.siblingPlaySpeed, 0.25D, 3.0D, value -> config.siblingPlaySpeed = value),
-                doubleOption("family_ai.config.sibling_play_range", config.siblingPlayRange, 2.0D, 32.0D, value -> config.siblingPlayRange = value)
+                boolOption("family_ai.config.enable_debug", () -> config.enableDebug, value -> config.enableDebug = value),
+                intOption("family_ai.config.debug_detail_level", () -> config.debugDetailLevel, 0, 3, value -> config.debugDetailLevel = value)
         );
         this.list.addSmall(
-                intOption("family_ai.config.sibling_play_duration_ticks", () -> config.siblingPlayDurationTicks, 20, 20 * 60, value -> config.siblingPlayDurationTicks = value),
-                intOption("family_ai.config.sibling_play_cooldown_ticks", () -> config.siblingPlayCooldownTicks, 20, 20 * 180, value -> config.siblingPlayCooldownTicks = value)
+                boolOption("family_ai.config.allow_guide_command", () -> config.allowGuideCommand, value -> config.allowGuideCommand = value),
+                intOption("family_ai.config.warning_sound_cooldown_ticks", () -> config.warningSoundCooldownTicks, 5, 20 * 10, value -> config.warningSoundCooldownTicks = value)
+        );
+    }
+
+    private void addPerformanceOptions(FamilyAiConfig config) {
+        this.list.addSmall(
+                intOption("family_ai.config.ai_update_interval_ticks", () -> config.aiUpdateIntervalTicks, 2, 80, value -> config.aiUpdateIntervalTicks = value),
+                intOption("family_ai.config.herd_leader_swap_cooldown_ticks", () -> config.herdLeaderSwapCooldownTicks, 20, 20 * 120, value -> config.herdLeaderSwapCooldownTicks = value)
+        );
+        this.list.addSmall(
+                doubleOption("family_ai.config.hostile_scan_range", config.hostileScanRange, 1.0D, 32.0D, value -> config.hostileScanRange = value),
+                doubleOption("family_ai.config.herd_gossip_range", config.herdGossipRange, 8.0D, 24.0D, value -> config.herdGossipRange = value)
+        );
+        this.list.addSmall(
+                intOption("family_ai.config.natural_family_chunk_cooldown_ticks", () -> config.naturalFamilyChunkCooldownTicks, 20, 20 * 60 * 20, value -> config.naturalFamilyChunkCooldownTicks = value),
+                intOption("family_ai.config.natural_family_local_cap", () -> config.naturalFamilyLocalCap, 2, 80, value -> config.naturalFamilyLocalCap = value)
+        );
+    }
+
+    private static OptionInstance<Boolean> boolOption(String key, Supplier<Boolean> currentValue, Consumer<Boolean> setter) {
+        return OptionInstance.createBoolean(
+                key,
+                currentValue.get(),
+                value -> {
+                    setter.accept(value);
+                    FamilyAiConfig.save();
+                }
         );
     }
 
@@ -180,6 +223,47 @@ public final class FamilyAiConfigCategoryScreen extends OptionsSubScreen {
                     FamilyAiConfig.save();
                 }
         );
+    }
+
+    private static OptionInstance<Integer> hudModeOption(FamilyAiConfig config) {
+        return new OptionInstance<>(
+                "family_ai.config.hud_mode",
+                OptionInstance.noTooltip(),
+                (caption, value) -> Component.literal(caption.getString() + ": " + modeLabel(value)),
+                new OptionInstance.IntRange(0, 3),
+                modeToInt(config.resolvedHudMode()),
+                value -> {
+                    config.setHudMode(intToMode(value));
+                    FamilyAiConfig.save();
+                }
+        );
+    }
+
+    private static String modeLabel(int value) {
+        return switch (value) {
+            case 1 -> "SIMPLE";
+            case 2 -> "DETAILED";
+            case 3 -> "DEBUG";
+            default -> "OFF";
+        };
+    }
+
+    private static int modeToInt(FamilyAiHudMode mode) {
+        return switch (mode) {
+            case SIMPLE -> 1;
+            case DETAILED -> 2;
+            case DEBUG -> 3;
+            default -> 0;
+        };
+    }
+
+    private static FamilyAiHudMode intToMode(int value) {
+        return switch (value) {
+            case 1 -> FamilyAiHudMode.SIMPLE;
+            case 2 -> FamilyAiHudMode.DETAILED;
+            case 3 -> FamilyAiHudMode.DEBUG;
+            default -> FamilyAiHudMode.OFF;
+        };
     }
 
     private static double round(double value) {

@@ -3,6 +3,7 @@ package com.example.familyai.goal;
 import com.example.familyai.FamilyAi;
 import com.example.familyai.FamilyAiConfig;
 import com.example.familyai.FamilyAnimal;
+import com.example.familyai.FamilyAiState;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.animal.Animal;
@@ -14,27 +15,35 @@ import java.util.Optional;
 
 public final class RunToParentGoal extends Goal {
     private final Animal child;
+    private final double speed;
+    private final double stopDistance;
     private Animal parent;
     private Entity threat;
     private int recalcTicks;
 
     public RunToParentGoal(Animal child, double speed, double stopDistance) {
         this.child = child;
+        this.speed = speed;
+        this.stopDistance = stopDistance;
         this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
     }
 
     @Override
     public boolean canUse() {
+        FamilyAiConfig config = FamilyAiConfig.get();
+        if (!config.enableFamilySystem) {
+            return false;
+        }
         if (!child.isBaby()) {
             return false;
         }
 
-        FamilyAiConfig config = FamilyAiConfig.get();
         Optional<Player> hostile = FamilyAi.findHostilePlayer(child, config.hostileScanRange);
         hostile.ifPresent(player -> FamilyAi.onChildThreatened(child, player));
 
         parent = FamilyAi.findPreferredParent(child).orElse(null);
         if (parent == null) {
+            ((FamilyAnimal) child).family$setAiState(FamilyAiState.LOST_CHILD);
             return false;
         }
 
@@ -50,7 +59,6 @@ public final class RunToParentGoal extends Goal {
             return false;
         }
 
-        double stopDistance = FamilyAiConfig.get().childStopDistance;
         double stopDistanceSquared = stopDistance * stopDistance;
         return child.distanceToSqr(parent) > stopDistanceSquared;
     }
@@ -70,7 +78,14 @@ public final class RunToParentGoal extends Goal {
         if (--recalcTicks <= 0) {
             recalcTicks = 6;
             Vec3 target = FamilyAi.refugePointBehindParent(parent, threat);
-            child.getNavigation().moveTo(target.x, target.y, target.z, FamilyAiConfig.get().childFollowSpeed);
+            boolean ok = child.getNavigation().moveTo(target.x, target.y, target.z, speed);
+            FamilyAnimal data = (FamilyAnimal) child;
+            data.family$setAiState(FamilyAiState.FOLLOW_PARENT);
+            if (ok) {
+                data.family$setPathFailCount(Math.max(0, data.family$getPathFailCount() - 1));
+            } else {
+                data.family$setPathFailCount(data.family$getPathFailCount() + 1);
+            }
         }
     }
 

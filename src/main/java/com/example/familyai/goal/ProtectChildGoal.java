@@ -3,6 +3,7 @@ package com.example.familyai.goal;
 import com.example.familyai.FamilyAi;
 import com.example.familyai.FamilyAiConfig;
 import com.example.familyai.FamilyAnimal;
+import com.example.familyai.FamilyAiState;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.animal.Animal;
@@ -24,6 +25,10 @@ public final class ProtectChildGoal extends Goal {
 
     @Override
     public boolean canUse() {
+        FamilyAiConfig config = FamilyAiConfig.get();
+        if (!config.enableChildProtection) {
+            return false;
+        }
         if (parent.isBaby() || !((FamilyAnimal) parent).family$isAlert()) {
             return false;
         }
@@ -61,6 +66,9 @@ public final class ProtectChildGoal extends Goal {
             Vec3 guardPoint = FamilyAi.guardPointBetweenThreatAndChild(child, threat);
             if (parent.position().distanceToSqr(guardPoint) > 1.0D) {
                 parent.getNavigation().moveTo(guardPoint.x, guardPoint.y, guardPoint.z, FamilyAiConfig.get().parentProtectSpeed);
+                FamilyAnimal data = (FamilyAnimal) parent;
+                data.family$setAiState(FamilyAiState.PROTECT_CHILD);
+                data.family$setPanicCooldownTicks(Math.max(data.family$getPanicCooldownTicks(), 20));
             }
         }
     }

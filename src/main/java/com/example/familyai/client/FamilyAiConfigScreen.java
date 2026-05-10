@@ -7,7 +7,7 @@ import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 
 public final class FamilyAiConfigScreen extends Screen {
-    private static final int BUTTON_WIDTH = 170;
+    private static final int BUTTON_WIDTH = 154;
     private static final int BUTTON_HEIGHT = 20;
     private static final int BUTTON_GAP = 8;
     private final Screen parent;
@@ -20,7 +20,7 @@ public final class FamilyAiConfigScreen extends Screen {
     @Override
     protected void init() {
         FamilyAiConfigCategory[] categories = FamilyAiConfigCategory.values();
-        int columns = 2;
+        int columns = 3;
         int totalWidth = columns * BUTTON_WIDTH + (columns - 1) * BUTTON_GAP;
         int startX = (this.width - totalWidth) / 2;
         int startY = this.height / 4;
@@ -37,7 +37,8 @@ public final class FamilyAiConfigScreen extends Screen {
             ).bounds(x, y, BUTTON_WIDTH, BUTTON_HEIGHT).build());
         }
 
-        int doneButtonY = startY + ((categories.length + 1) / columns) * (BUTTON_HEIGHT + BUTTON_GAP) + 12;
+        int rows = (categories.length + columns - 1) / columns;
+        int doneButtonY = startY + rows * (BUTTON_HEIGHT + BUTTON_GAP) + 14;
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose())
                 .bounds((this.width - 150) / 2, doneButtonY, 150, BUTTON_HEIGHT)
                 .build());

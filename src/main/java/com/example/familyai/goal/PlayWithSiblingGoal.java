@@ -3,6 +3,7 @@ package com.example.familyai.goal;
 import com.example.familyai.FamilyAi;
 import com.example.familyai.FamilyAiConfig;
 import com.example.familyai.FamilyAnimal;
+import com.example.familyai.FamilyAiState;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.phys.Vec3;
@@ -22,6 +23,9 @@ public final class PlayWithSiblingGoal extends Goal {
 
     @Override
     public boolean canUse() {
+        if (!FamilyAiConfig.get().enableSiblingPlay) {
+            return false;
+        }
         if (!child.isBaby() || ((FamilyAnimal) child).family$isAlert()) {
             return false;
         }
@@ -55,7 +59,9 @@ public final class PlayWithSiblingGoal extends Goal {
     public void start() {
         FamilyAiConfig config = FamilyAiConfig.get();
         playTicks = config.siblingPlayDurationTicks;
-        ((FamilyAnimal) child).family$setLastPlayTick(child.level().getGameTime());
+        FamilyAnimal data = (FamilyAnimal) child;
+        data.family$setLastPlayTick(child.level().getGameTime());
+        data.family$setAiState(FamilyAiState.GRAZE);
     }
 
     @Override

@@ -3,6 +3,7 @@ package com.example.familyai.goal;
 import com.example.familyai.FamilyAi;
 import com.example.familyai.FamilyAiConfig;
 import com.example.familyai.FamilyAnimal;
+import com.example.familyai.FamilyAiState;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.phys.Vec3;
@@ -21,12 +22,16 @@ public final class StayNearMateGoal extends Goal {
 
     @Override
     public boolean canUse() {
+        FamilyAiConfig config = FamilyAiConfig.get();
+        if (!config.enableFamilySystem) {
+            return false;
+        }
         if (animal.isBaby() || ((FamilyAnimal) animal).family$isAlert()) {
             return false;
         }
 
         mate = FamilyAi.findMate(animal).orElse(null);
-        double maxRadius = FamilyAiConfig.get().mateCohesionRadius;
+        double maxRadius = config.mateCohesionRadius;
         return mate != null && animal.distanceToSqr(mate) > maxRadius * maxRadius;
     }
 
@@ -51,6 +56,7 @@ public final class StayNearMateGoal extends Goal {
             double maxRadius = config.mateCohesionRadius;
             Vec3 point = FamilyAi.mateCohesionPoint(animal, mate, maxRadius);
             animal.getNavigation().moveTo(point.x, point.y, point.z, config.mateCohesionSpeed);
+            ((FamilyAnimal) animal).family$setAiState(FamilyAiState.FOLLOW_HERD);
         }
     }
 

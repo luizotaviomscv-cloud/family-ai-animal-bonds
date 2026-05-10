@@ -14,6 +14,9 @@
     "main": [
       "com.example.familyai.FamilyAiMod"
     ],
+    "client": [
+      "com.example.familyai.client.FamilyAiClientMod"
+    ],
     "modmenu": [
       "com.example.familyai.client.FamilyAiModMenuIntegration"
     ]

@@ -3,6 +3,7 @@ package com.example.familyai.goal;
 import com.example.familyai.FamilyAi;
 import com.example.familyai.FamilyAiConfig;
 import com.example.familyai.FamilyAnimal;
+import com.example.familyai.FamilyAiState;
 import com.example.familyai.ReputationState;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.animal.Animal;
@@ -28,6 +29,9 @@ public final class KeepDistanceFromPlayerGoal extends Goal {
 
     @Override
     public boolean canUse() {
+        if (!FamilyAiConfig.get().enableAdvancedDangerReaction) {
+            return false;
+        }
         if (animal.isBaby()) {
             return false;
         }
@@ -78,6 +82,7 @@ public final class KeepDistanceFromPlayerGoal extends Goal {
         if (state == ReputationState.HOSTILE && warningSoundCooldown-- <= 0) {
             warningSoundCooldown = FamilyAiConfig.get().warningSoundCooldownTicks;
             animal.playAmbientSound();
+            ((FamilyAnimal) animal).family$setAiState(FamilyAiState.ALERT);
         }
 
         if (state == ReputationState.HOSTILE) {
@@ -95,6 +100,7 @@ public final class KeepDistanceFromPlayerGoal extends Goal {
             Vec3 target = animal.position().add(away.normalize().scale(retreatDistance));
             double speed = state == ReputationState.HOSTILE ? 1.18D : 0.98D;
             animal.getNavigation().moveTo(target.x, target.y, target.z, speed);
+            ((FamilyAnimal) animal).family$setAiState(state == ReputationState.HOSTILE ? FamilyAiState.FLEE : FamilyAiState.ALERT);
         }
     }
 

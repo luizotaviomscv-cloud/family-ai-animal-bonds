@@ -48,6 +48,24 @@ public final class FamilyAi {
         if (data.family$getSex() == FamilySex.UNKNOWN) {
             data.family$setSex(FamilySex.random(animal.getRandom()));
         }
+        if (data.family$getAiState() == null) {
+            data.family$setAiState(FamilyAiState.IDLE);
+        }
+        if (data.family$getStateChangedTick() == 0L) {
+            data.family$setStateChangedTick(animal.level().getGameTime());
+        }
+        if (data.family$getLastKnownX() == 0.0D && data.family$getLastKnownY() == 0.0D && data.family$getLastKnownZ() == 0.0D) {
+            data.family$setLastKnownPos(animal.getX(), animal.getY(), animal.getZ());
+        }
+        if (FamilyAiConfig.get().enablePersonality && data.family$getTraitFear() == 0.5D
+                && data.family$getTraitProtective() == 0.5D
+                && data.family$getTraitHerdAffinity() == 0.5D) {
+            data.family$setTraits(
+                    0.2D + animal.getRandom().nextDouble() * 0.6D,
+                    0.2D + animal.getRandom().nextDouble() * 0.6D,
+                    0.2D + animal.getRandom().nextDouble() * 0.6D
+            );
+        }
 
         tryNaturalFamilySpawn(animal, data);
     }
@@ -90,6 +108,10 @@ public final class FamilyAi {
         UUID threatUuid = threat == null ? null : threat.getUUID();
         FamilyAnimal childData = (FamilyAnimal) child;
         FamilyAiConfig config = FamilyAiConfig.get();
+        childData.family$setLastThreatTick(level.getGameTime());
+        childData.family$setPanicCooldownTicks(config.panicCooldownTicks);
+        childData.family$setAiState(FamilyAiState.ALERT);
+        childData.family$setStateChangedTick(level.getGameTime());
 
         if (childData.family$isAlert() && childData.family$getAlertCooldownTicks() > 0) {
             return;
@@ -154,6 +176,32 @@ public final class FamilyAi {
         rewardDefenderIfApplicable(level, victim, player);
     }
 
+    public static void onFamilyAnimalDamaged(Animal animal, Entity threat) {
+        if (!(animal.level() instanceof ServerLevel level) || !isFamilyAnimal(animal)) {
+            return;
+        }
+        FamilyAnimal data = (FamilyAnimal) animal;
+        data.family$setLastThreatTick(level.getGameTime());
+        data.family$setPanicCooldownTicks(FamilyAiConfig.get().panicCooldownTicks);
+        if (animal.isBaby()) {
+            onChildThreatened(animal, threat);
+            return;
+        }
+
+        if (threat == null) {
+            return;
+        }
+
+        FamilyAiConfig config = FamilyAiConfig.get();
+        data.family$alert(threat.getUUID(), animal.getUUID(), config.alertTicks / 2, config.alertCooldownTicks);
+        AABB box = animal.getBoundingBox().inflate(config.dangerDetectionRadius);
+        level.getEntitiesOfClass(Animal.class, box, candidate -> candidate != animal
+                        && candidate.isAlive()
+                        && candidate.getType() == animal.getType()
+                        && isFamilyAnimal(candidate))
+                .forEach(candidate -> ((FamilyAnimal) candidate).family$alert(threat.getUUID(), animal.getUUID(), config.alertTicks / 3, config.alertCooldownTicks));
+    }
+
     public static void tickFamilyAi(Animal animal) {
         if (!(animal.level() instanceof ServerLevel level) || !isFamilyAnimal(animal)) {
             return;
@@ -161,6 +209,7 @@ public final class FamilyAi {
 
         tickReputationDecay(animal, level.getGameTime());
         tickWeaponSprintPenalty(animal, level.getGameTime());
+        FamilyAiBrain.tick(animal, level.getGameTime());
         cleanupCooldownMaps(level.getGameTime());
     }
 
@@ -185,7 +234,12 @@ public final class FamilyAi {
             return father;
         }
 
-        return findFallbackParent(child, FamilySex.MALE);
+        Optional<Animal> fallbackFather = findFallbackParent(child, FamilySex.MALE);
+        if (fallbackFather.isPresent()) {
+            return fallbackFather;
+        }
+
+        return findTemporaryAdultGuardian(child);
     }
 
     public static Optional<Animal> findPlaymate(Animal child) {
@@ -528,29 +582,43 @@ public final class FamilyAi {
 
         // Prevent mod-spawned family members from recursively creating new family groups.
         if (NATURAL_FAMILY_SPAWN_SUPPRESSION.remove(seed.getUUID())) {
+            seedData.family$setNaturalSpawnProcessed(true);
             return;
         }
 
         FamilyAiConfig config = FamilyAiConfig.get();
         if (!config.enableNaturalFamilySpawns || config.naturalFamilySpawnChance <= 0.0D) {
+            seedData.family$setNaturalSpawnProcessed(true);
             return;
         }
         if (!isSupportedNaturalFamilySpecies(seed.getType())) {
+            seedData.family$setNaturalSpawnProcessed(true);
+            return;
+        }
+        if (seedData.family$isNaturalSpawnProcessed()) {
             return;
         }
 
         // Heuristic for fresh natural-like adults: first ticks, no known parents, no registered children.
         if (seed.tickCount > 2) {
+            seedData.family$setNaturalSpawnProcessed(true);
             return;
         }
         if (seedData.family$getMotherUuid().isPresent() || seedData.family$getFatherUuid().isPresent()) {
+            seedData.family$setNaturalSpawnProcessed(true);
             return;
         }
         if (!seedData.family$getChildUuids().isEmpty()) {
+            seedData.family$setNaturalSpawnProcessed(true);
+            return;
+        }
+        if (!isNaturalFamilyAnchor(seed, config.naturalFamilyAnchorRange)) {
+            seedData.family$setNaturalSpawnProcessed(true);
             return;
         }
 
         if (seed.getRandom().nextDouble() > config.naturalFamilySpawnChance) {
+            seedData.family$setNaturalSpawnProcessed(true);
             return;
         }
 
@@ -558,17 +626,20 @@ public final class FamilyAi {
         long now = level.getGameTime();
         long last = CHUNK_FAMILY_SPAWN_COOLDOWNS.getOrDefault(chunkKey, Long.MIN_VALUE / 4L);
         if (now - last < config.naturalFamilyChunkCooldownTicks) {
+            seedData.family$setNaturalSpawnProcessed(true);
             return;
         }
 
         AABB localBox = seed.getBoundingBox().inflate(config.naturalFamilySpawnRadius);
         long localCount = level.getEntitiesOfClass(Animal.class, localBox, candidate -> candidate.getType() == seed.getType()).size();
         if (localCount >= config.naturalFamilyLocalCap) {
+            seedData.family$setNaturalSpawnProcessed(true);
             return;
         }
 
         // Set cooldown before spawning to avoid re-entrant cascades in the same chunk.
         CHUNK_FAMILY_SPAWN_COOLDOWNS.put(chunkKey, now);
+        seedData.family$setNaturalSpawnProcessed(true);
         spawnNaturalFamilyGroup(level, seed);
     }
 
@@ -705,6 +776,19 @@ public final class FamilyAi {
                         .min(Comparator.comparingDouble(child::distanceToSqr)));
     }
 
+    private static Optional<Animal> findTemporaryAdultGuardian(Animal child) {
+        FamilyAiConfig config = FamilyAiConfig.get();
+        AABB box = child.getBoundingBox().inflate(config.parentFallbackRange);
+        return child.level()
+                .getEntitiesOfClass(Animal.class, box, candidate -> candidate != child
+                        && candidate.isAlive()
+                        && !candidate.isBaby()
+                        && candidate.getType() == child.getType()
+                        && isFamilyAnimal(candidate))
+                .stream()
+                .min(Comparator.comparingDouble(child::distanceToSqr));
+    }
+
     private static boolean isRecognizedFallbackParent(Animal child, Animal candidate) {
         return candidate != child
                 && !candidate.isBaby()
@@ -736,6 +820,16 @@ public final class FamilyAi {
 
     private static boolean sameParent(Optional<UUID> a, Optional<UUID> b) {
         return a.isPresent() && b.isPresent() && a.get().equals(b.get());
+    }
+
+    private static boolean isNaturalFamilyAnchor(Animal seed, double anchorRange) {
+        AABB box = seed.getBoundingBox().inflate(anchorRange);
+        return seed.level()
+                .getEntitiesOfClass(Animal.class, box, candidate -> candidate != seed
+                        && candidate.getType() == seed.getType()
+                        && !candidate.isBaby())
+                .stream()
+                .noneMatch(candidate -> candidate.getUUID().compareTo(seed.getUUID()) < 0);
     }
 
     private static Optional<Animal> findAnimal(ServerLevel level, Optional<UUID> uuid) {

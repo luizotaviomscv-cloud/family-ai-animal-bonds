@@ -32,6 +32,38 @@ public interface FamilyAnimal {
 
     long family$getLastPlayTick();
 
+    long family$getLastThreatTick();
+
+    long family$getStateChangedTick();
+
+    long family$getLastPathRecalcTick();
+
+    int family$getPanicCooldownTicks();
+
+    int family$getStuckTicks();
+
+    int family$getPathFailCount();
+
+    double family$getLastKnownX();
+
+    double family$getLastKnownY();
+
+    double family$getLastKnownZ();
+
+    double family$getTraitFear();
+
+    double family$getTraitProtective();
+
+    double family$getTraitHerdAffinity();
+
+    FamilyAiState family$getAiState();
+
+    Optional<UUID> family$getLeaderUuid();
+
+    Optional<UUID> family$getTempGuardianUuid();
+
+    boolean family$isNaturalSpawnProcessed();
+
     void family$setMotherUuid(UUID uuid);
 
     void family$setFatherUuid(UUID uuid);
@@ -51,6 +83,30 @@ public interface FamilyAnimal {
     int family$getReputation(UUID playerUuid);
 
     void family$setLastPlayTick(long gameTick);
+
+    void family$setLastThreatTick(long gameTick);
+
+    void family$setStateChangedTick(long gameTick);
+
+    void family$setLastPathRecalcTick(long gameTick);
+
+    void family$setPanicCooldownTicks(int ticks);
+
+    void family$setStuckTicks(int ticks);
+
+    void family$setPathFailCount(int count);
+
+    void family$setLastKnownPos(double x, double y, double z);
+
+    void family$setTraits(double fear, double protective, double herdAffinity);
+
+    void family$setAiState(FamilyAiState state);
+
+    void family$setLeaderUuid(UUID uuid);
+
+    void family$setTempGuardianUuid(UUID uuid);
+
+    void family$setNaturalSpawnProcessed(boolean processed);
 
     void family$alert(UUID threatUuid, UUID childUuid, int ticks, int cooldownTicks);
 
